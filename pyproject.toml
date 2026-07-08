@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "energy-storage-optimization"
+version = "0.1.0"
+description = "Ein MPC-basierter Optimierungs-Algorithmus für Batteriespeicher in PV-integrierten Energiesystemen."
+readme = "README.md"
+requires-python = ">=3.10,<3.12"
+license = { text = "MIT" }
+authors = [
+    { name = "Josina Schulte" }
+]
+dependencies = [
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+    "oemof.solph>=0.5.0",
+    "networkx>=3.0",
+]

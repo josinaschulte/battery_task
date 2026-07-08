@@ -1,0 +1,10 @@
+name: battery_task
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - coincbc
+  - pip
+  - pip:
+      - .

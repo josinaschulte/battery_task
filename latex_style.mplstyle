@@ -1,0 +1,26 @@
+# Figure
+figure.figsize : 10, 6
+
+# Font and Text Settings
+font.size : 12
+font.family : serif
+text.usetex : True
+
+# Grid and Lines
+axes.grid : True
+grid.alpha : 0.5
+lines.linewidth : 1.5
+patch.linewidth : 1.0
+
+# Axes and Ticks
+xtick.major.size : 4.0
+ytick.major.size : 4.0
+axes.labelsize : large
+
+# Legend and Layout
+legend.fancybox : False
+savefig.dpi : 200
+savefig.bbox : tight
+
+# Colors encentive style: orange, blue, green, dark yellow, greige
+axes.prop_cycle: cycler('color', ['EF7A1A', '00C29A', '544CFF', 'EED40A', 'DEDCD2'])
