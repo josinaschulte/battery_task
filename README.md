@@ -47,6 +47,9 @@ The solution to the task is separated in four parts based on the assumptions out
 - **Time zones:**
 Due to a time zone mismatch between the PV data (*UTC*) and the consumption data (*Europe/Berlin local*), two options are being considered to fulfill the customer's request for a 24-hour battery schedule: either prefill the PV data with 0s for 2 hours during the night, as no PV is expected anyway, or assume a mislabelling of the consumption data and shift it to UTC as well. The fact that the test customer is located in the Europe/Berlin time zone is verified by the peak in the given PV data at noon local Berlin time. The script output can be in Europe/Berlin local time or UTC: this is managed with the argument `--timezone`. The default is Europe/Berlin local time. If the consumption data are to be shifted to UTC, the argument `--assume_mislabel` can be used. The default is no shift in time and the prefilling with 0s.
 
+- **Battery state of charge at the end of the day:**
+The battery has to end the 24 hours with the same state of charge it started with (10 kWh, `balanced=True`). Otherwise the optimizer would use up the energy that is already stored in the battery at the start of the day, and the reported savings compared to the scenario without battery would include this extra energy. With this constraint, the savings only result from operating the battery within the day.
+
 - **Battery degradation:**
 The _battery degradation costs_ applied in this model are 0.03€/kWh as a rough estimate. This also suppresses sharp jumps in the battery schedule.
 

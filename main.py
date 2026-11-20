@@ -54,7 +54,7 @@ plotter = EnergyPlotter(
 
 # Initialize optimizer
 optimizer = BatteryOptimizer(
-    battery_params=battery, penalty_weight=0.1, balanced=False, deg_cost=0.03
+    battery_params=battery, penalty_weight=0.1, balanced=True, deg_cost=0.03
 )
 
 ###########################################################
