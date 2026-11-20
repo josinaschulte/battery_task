@@ -89,6 +89,31 @@ print(
     f"Total cost with optimized battery: {total_cost_optimized:.2f} €"
 )
 
+# Save the battery schedule (charge > 0, discharge < 0) in 15 minute resolution
+os.makedirs("results", exist_ok=True)
+schedule = results_df[
+    [
+        "battery_schedule_kw",
+        "battery_charge_power_kw",
+        "battery_discharge_power_kw",
+        "soc_kwh",
+        "net_demand_kw_pos",
+        "net_demand_kw_neg",
+    ]
+].rename(
+    columns={
+        "soc_kwh": "soc_at_interval_start_kwh",
+        "net_demand_kw_pos": "grid_import_kw",
+        "net_demand_kw_neg": "grid_export_kw",
+    }
+)
+# Round away solver noise; adding 0.0 turns -0.0 into 0.0
+schedule = schedule.round(3) + 0.0
+suffix = "_mislabel" if args.assume_mislabel else ""
+schedule_file = f"results/battery_schedule_{args.timezone[:3]}{suffix}.csv"
+schedule.to_csv(schedule_file)
+print(f"Battery schedule saved to {schedule_file}")
+
 plotter.plot_scenario_2(df_preprocessed, results_df, total_cost_optimized)
 
 ###################################################
