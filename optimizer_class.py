@@ -11,7 +11,7 @@ class BatteryOptimizer:
     def __init__(
         self,
         battery_params: dict,
-        penalty_weight: float = 0.1,
+        penalty_weight: float = 10.0,
         balanced: bool = False,
         deg_cost: float = 0.0,
     ):
