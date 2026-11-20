@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "energy-storage-optimization"
 version = "0.1.0"
-description = "Ein MPC-basierter Optimierungs-Algorithmus für Batteriespeicher in PV-integrierten Energiesystemen."
+description = "Optimization of a battery schedule for a consumer with PV system and grid connection using oemof.solph."
 readme = "README.md"
 requires-python = ">=3.10,<3.12"
 license = { text = "MIT" }

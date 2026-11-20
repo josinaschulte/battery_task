@@ -126,7 +126,7 @@ plotter.plot_scenario_2(df_preprocessed, results_df, total_cost_optimized)
 # using a normal distribution with standard deviation pv_std and load_std, respectively
 ###################################################
 
-mc_schedules, mc_socs, mc_pvs, mc_loads, mc_imports, mc_costs = (
+mc_schedules, mc_socs, mc_pvs, mc_loads, mc_imports = (
     optimizer.run_monte_carlo_sensitivity(
         df_base=df_preprocessed, n_scenarios=30, pv_std=0.10, load_std=0.10
     )

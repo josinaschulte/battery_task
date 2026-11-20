@@ -60,14 +60,14 @@ class BatteryOptimizer:
         )
         energysystem.add(demand_sink, pv_source)
 
+        # Variable costs are given in €/kWh: oemof multiplies them with the
+        # flow in kW and the length of the time step (0.25 h)
         grid_import = solph.components.Source(
             label="grid_demand",
-            outputs={
-                b_el: solph.Flow(variable_costs=df["demand_price_eur_per_kwh"] * 0.25)
-            },
+            outputs={b_el: solph.Flow(variable_costs=df["demand_price_eur_per_kwh"])},
         )
 
-        export_costs = (self.penalty_weight - df["supply_price_eur_per_kwh"]) * 0.25
+        export_costs = self.penalty_weight - df["supply_price_eur_per_kwh"]
         grid_export = solph.components.Sink(
             label="grid_supply", inputs={b_el: solph.Flow(variable_costs=export_costs)}
         )
@@ -96,7 +96,7 @@ class BatteryOptimizer:
                     nominal_capacity=self.battery["discharge_power_max_kw"],
                     maximum=1.0,
                     nonconvex=solph.NonConvex(),
-                    variable_costs=self.deg_cost * 0.25,
+                    variable_costs=self.deg_cost,
                 )
             },
             initial_storage_level=start_soc / self.battery["capacity_kwh"],
@@ -194,8 +194,7 @@ class BatteryOptimizer:
         pv_std: float = 0.10,
         load_std: float = 0.10,
     ):
-        all_schedules, all_socs, all_pvs, all_loads, all_imports, all_costs = (
-            [],
+        all_schedules, all_socs, all_pvs, all_loads, all_imports = (
             [],
             [],
             [],
@@ -215,21 +214,12 @@ class BatteryOptimizer:
             all_pvs.append(df_noisy["pv_power_kw"].rename(f"scenario_{i}"))
             all_loads.append(df_noisy["fixed_demand_kw"].rename(f"scenario_{i}"))
 
-            cost_import = (
-                res["net_demand_kw_pos"] * 0.25 * df_noisy["demand_price_eur_per_kwh"]
-            )
-            revenue_export = (
-                res["net_demand_kw_neg"] * 0.25 * df_noisy["supply_price_eur_per_kwh"]
-            )
-            all_costs.append((cost_import - revenue_export).sum())
-
         return (
             pd.concat(all_schedules, axis=1),
             pd.concat(all_socs, axis=1),
             pd.concat(all_pvs, axis=1),
             pd.concat(all_loads, axis=1),
             pd.concat(all_imports, axis=1),
-            all_costs,
         )
 
     def run_mpc_simulation(

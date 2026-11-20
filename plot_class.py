@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 plt.style.use("latex_style.mplstyle")
@@ -250,47 +249,6 @@ class Plotter:
         fig.savefig(filename)
         plt.close(fig)
 
-    def plot_cost_distribution(
-        self, costs: list[float], reference_cost: float, filename: str
-    ) -> None:
-        plt.figure(figsize=(8, 5))
-
-        plt.hist(
-            costs,
-            bins=10,
-            color="darkgrey",
-            edgecolor="black",
-            alpha=0.7,
-            label="Monte-Carlo Szenarien",
-        )
-
-        # Reference: perfect foresight model
-        plt.axvline(
-            reference_cost,
-            color="black",
-            linestyle="-",
-            linewidth=2,
-            label=f"Perfect foresight ({reference_cost:.2f} €)",
-        )
-        # Mean cost
-        mean_cost = np.mean(costs)
-        plt.axvline(
-            mean_cost,
-            color="dimgrey",
-            linestyle="--",
-            linewidth=2,
-            label=f"Expected cost (mean: {mean_cost:.2f} €)",
-        )
-
-        plt.xlabel("Total daily cost / €")
-        plt.ylabel("Number of scenarios")
-        plt.legend()
-        plt.grid(axis="y", alpha=0.3)
-
-        plt.tight_layout()
-        plt.savefig(filename)
-        plt.close()
-
 
 @dataclass
 class EnergyPlotter(Plotter):
@@ -450,7 +408,7 @@ class EnergyPlotter(Plotter):
                 df_pre["supply_price_eur_per_kwh"],
             ],
             price_labels=["Grid Demand Price", "Grid Supply Price"],
-            price_colors=[self.colors["export"], self.colors["import"]],
+            price_colors=[self.colors["import"], self.colors["export"]],
             price_ylabel="Price / (€/kWh)",
             filename=self._get_filename("3_energy_dashboard_mc_variance"),
             power_mins=[stats["pv_min"], stats["load_min"], stats["import_min"]],
