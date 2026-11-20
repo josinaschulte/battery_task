@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from oemof import solph
 from oemof.network.graph import create_nx_graph
 import networkx as nx
+import pyomo.environ as po
 
 
 class BatteryOptimizer:
@@ -130,6 +131,19 @@ class BatteryOptimizer:
             plt.close()
 
         model = solph.Model(energysystem)
+
+        # The battery cannot charge and discharge at the same time:
+        # at most one of the binary on/off variables of the charge
+        # and discharge flow can be 1 in every time step
+        status = model.NonConvexFlowBlock.status
+
+        def no_simultaneous_charge_discharge(m, t):
+            return status[b_el, storage, t] + status[storage, b_el, t] <= 1
+
+        model.no_simultaneous_charge_discharge = po.Constraint(
+            model.TIMESTEPS, rule=no_simultaneous_charge_discharge
+        )
+
         model.solve(solver="cbc", solve_kwargs={"tee": printing})
         results = solph.processing.results(model)
 
