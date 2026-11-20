@@ -149,33 +149,27 @@ plotter.plot_scenario_3(df_preprocessed, stats)
 # How would an optimization including uncertainties work?
 # -> try Model Predictive Control (MPC)
 #
-# We only have 24 hour of data, just assume 3 days in the row
-# with same PV & consumption to perform MPC for a 24h period
+# Every 15 minutes, the schedule until the end of the day is optimized
+# for a new noisy forecast and only its first 15 minutes are carried out.
+# The battery has to end the day with at least its initial SOC,
+# so the cost is comparable to scenario 2.
 ###################################################
 
-df_extended_actual = pd.concat([df_preprocessed] * 3)
-df_extended_actual.index = [
-    df_preprocessed.index[0] + pd.Timedelta(minutes=15) * i
-    for i in range(len(df_extended_actual))
-]
-
-df_extended_noisy = BatteryOptimizer.generate_uncertain_predictions(
-    df_extended_actual, pv_std=0.10, load_std=0.10
+results_df_mpc, mpc_final_soc = optimizer.run_mpc_simulation(
+    df_actual=df_preprocessed, pv_std=0.10, load_std=0.10
 )
-results_df_mpc = optimizer.run_mpc_simulation(
-    df_actual=df_extended_actual, pv_std=0.10, load_std=0.10, horizon_hours=24
-)
-
-# clip results and noisy data to first 24h
-results_df_mpc_24h = results_df_mpc.iloc[:96].copy()
-df_noisy_24h = df_extended_noisy.iloc[:96].copy()
 
 total_cost_mpc = BatteryOptimizer.calculate_scenario_costs(
-    df_results=results_df_mpc_24h,
-    demand_price=results_df_mpc_24h["demand_price_eur_per_kwh"],
-    supply_price=results_df_mpc_24h["supply_price_eur_per_kwh"],
+    df_results=results_df_mpc,
+    demand_price=results_df_mpc["demand_price_eur_per_kwh"],
+    supply_price=results_df_mpc["supply_price_eur_per_kwh"],
 )
+supply_mpc = results_df_mpc["net_demand_kw_neg"].sum() * 0.25
 
-print(f"Total cost with MPC optimized battery: {total_cost_mpc:.2f} €")
+print(
+    f"Total cost with MPC optimized battery: {total_cost_mpc:.2f} € "
+    f"(battery SOC at the end of the day: {mpc_final_soc:.2f} kWh)"
+)
+print(f"Energy supplied to the grid with MPC: {supply_mpc:.2f} kWh")
 
-plotter.plot_scenario_4(results_df_mpc_24h, df_noisy_24h)
+plotter.plot_scenario_4(results_df_mpc)

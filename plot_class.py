@@ -461,32 +461,27 @@ class EnergyPlotter(Plotter):
             schedule_max=stats["schedule_max"],
         )
 
-    def plot_scenario_4(self, results_df_mpc: pd.DataFrame, df_noisy: pd.DataFrame):
-        """Model Predictive Control results."""
+    def plot_scenario_4(self, results_df_mpc: pd.DataFrame):
+        """Model Predictive Control results with the actual PV and consumption."""
         self.plot_energy_dashboard(
             power_data=[
                 results_df_mpc["pv_power_kw"],
-                df_noisy["pv_power_kw"],
                 results_df_mpc["fixed_demand_kw"],
-                df_noisy["fixed_demand_kw"],
                 results_df_mpc["net_demand_kw_pos"],
+                results_df_mpc["net_demand_kw_neg"],
             ],
             power_labels=[
-                "PV (original)",
-                "PV (noisy)",
-                "Consumption (original)",
-                "Consumption (noisy)",
+                "PV Generation",
+                "Consumption",
                 "Grid Import",
+                "Grid Supply (Export)",
             ],
             power_colors=[
                 self.colors["pv"],
-                self.colors["pv"],
-                self.colors["consumption"],
                 self.colors["consumption"],
                 self.colors["import"],
+                self.colors["export"],
             ],
-            power_linestyles=["-", "--", "-", "--", "-"],
-            power_alphas=[1.0, 0.4, 1.0, 0.4, 1.0],
             power_ylabel="Power / kW",
             soc_data=results_df_mpc["soc_kwh"],
             soc_label="Battery SOC",
@@ -501,7 +496,7 @@ class EnergyPlotter(Plotter):
                 results_df_mpc["supply_price_eur_per_kwh"],
             ],
             price_labels=["Grid Demand Price", "Grid Supply Price"],
-            price_colors=[self.colors["export"], self.colors["import"]],
+            price_colors=[self.colors["import"], self.colors["export"]],
             price_ylabel="Price / (€/kWh)",
             filename=self._get_filename("4_energy_dashboard_mpc"),
         )
