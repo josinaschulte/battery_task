@@ -13,7 +13,7 @@ This repository contains a Python project to solve the energy management task ou
 ## Prerequisites
 
 ### 1. External Solver
-`oemof.solph` requires an external solver for linear programming, e.g. CBC.
+`oemof.solph` requires an external solver for mixed-integer linear programming (the on/off variables of the battery are binary), e.g. CBC.
 
 ### 2. LaTeX for Plotting
 The visualization script uses a custom matplotlib style (`latex_style.mplstyle`). This requires a local LaTeX installation to render the plots properly.
@@ -47,15 +47,18 @@ The solution to the task is separated in four parts based on the assumptions out
 - **Time zones:**
 Due to a time zone mismatch between the PV data (*UTC*) and the consumption data (*Europe/Berlin local*), two options are being considered to fulfill the customer's request for a 24-hour battery schedule: either prefill the PV data with 0s for 2 hours during the night, as no PV is expected anyway, or assume a mislabelling of the consumption data and shift it to UTC as well. The fact that the test customer is located in the Europe/Berlin time zone is verified by the peak in the given PV data at noon local Berlin time. The script output can be in Europe/Berlin local time or UTC: this is managed with the argument `--timezone`. The default is Europe/Berlin local time. If the consumption data are to be shifted to UTC, the argument `--assume_mislabel` can be used. The default is no shift in time and the prefilling with 0s.
 
+- **15-minute resolution:**
+The consumption data is given hourly in W and converted to kW. Like the hourly grid prices, each hourly value is kept constant for the four 15-minute steps of its hour, since the given values apply from their timestamp until the next one. The PV data is already given in kW in 15-minute resolution.
+
 - **Battery state of charge at the end of the day:**
 The battery has to end the 24 hours with the same state of charge it started with (10 kWh, `balanced=True`). Otherwise the optimizer would use up the energy that is already stored in the battery at the start of the day, and the reported savings compared to the scenario without battery would include this extra energy. With this constraint, the savings only result from operating the battery within the day.
 
 - **Battery degradation:**
-The _battery degradation costs_ applied in this model are 0.03€/kWh as a rough estimate. This also suppresses sharp jumps in the battery schedule.
+The _battery degradation costs_ applied in this model are 0.03€/kWh of discharged energy as a rough estimate. This makes charging and discharging the battery for very small price differences unattractive.
 
 ### 1. Scenario
 
-- **PV + Consumption + Grid without Battery:** This is the basic setup for the test customer. Here, an overview of the situation without the additional battery in the system is produced. To this end, plots of the data are generated. The PV and consumption power as a function of time are plotted, as well as the net demand which is calculated by subtracting the consumption demand from the PV. Additionally, the grid price is shown, as well as the net cost as a function of time and the total sum for the given 24 hours.
+- **PV + Consumption + Grid without Battery:** This is the basic setup for the test customer. Here, an overview of the situation without the additional battery in the system is produced. To this end, plots of the data are generated. The PV and consumption power as a function of time are plotted, as well as the net demand which is calculated by subtracting the PV power from the consumption. Additionally, the grid price is shown, as well as the net cost as a function of time and the total sum for the given 24 hours.
 
 ### 2. Scenario
 
@@ -64,7 +67,7 @@ The _battery degradation costs_ applied in this model are 0.03€/kWh as a rough
 
 ### 3. Scenario
 
-- **PV + Consumption + Grid + Battery - Uncertainties:** Here, the influence of uncertainties in the prediction of the PV and consumption power is looked at. Therefore, `n_scenarios` schedules for fluctuating PV and consumption data are calculated using normal distributions with standard deviation `pv_std` and `load_std`, respectively, both clipped to values larger than zero. The default are `30` scenarios with `0.1` as standard deviation for PV and consumption power. The resulting _energy dashboard_ is plotted with bands representing the spread of all scenarios. The general schedule is relatively constant for uncertainties in this order of magnitude.
+- **PV + Consumption + Grid + Battery - Uncertainties:** Here, the influence of uncertainties in the prediction of the PV and consumption power is looked at. Therefore, `n_scenarios` schedules for fluctuating PV and consumption data are calculated by adding normally distributed noise to the data, both clipped to values larger than zero. The standard deviation of the noise is `pv_std` and `load_std` times the daily maximum of the PV and consumption power, respectively. The default are `30` scenarios with `pv_std` and `load_std` of `0.1`, i.e. 10% of the daily maximum (1.2 kW for PV and 0.81 kW for consumption). The resulting _energy dashboard_ is plotted with bands representing the spread of all scenarios. The general schedule is relatively constant for uncertainties in this order of magnitude.
 
 ### 4. Scenario
 
