@@ -48,11 +48,11 @@ class Test_Customer_Data:
 
         consumption_data = consumption_data.reindex(complete_index).ffill()
 
-        consumption_data.index = consumption_data.index.tz_localize("Europe/Berlin")
-        if self.target_timezone != "Europe/Berlin":
-            consumption_data.index = consumption_data.index.tz_convert(
-                self.target_timezone
-            )
+        # Attach the time zone of the timestamps before converting to the target
+        # time zone: Europe/Berlin as labeled, or UTC if a mislabel is assumed
+        source_timezone = "UTC" if self.assume_mislabel else "Europe/Berlin"
+        consumption_data.index = consumption_data.index.tz_localize(source_timezone)
+        consumption_data.index = consumption_data.index.tz_convert(self.target_timezone)
 
         # rename for consistency
         consumption_data.index.names = ["timestamp"]
@@ -80,10 +80,15 @@ class Test_Customer_Data:
         Generates pd.DataFrame from grid dict with variable start date based on assumed time zone of data,
         upsamples it to 15 minute intervals
         and converts it to target time zone as well.
+        If assume_mislabel is True, the prices are shifted to UTC like the consumption data.
         """
+        start_date = self.grid_start_date
+        if self.assume_mislabel:
+            start_date = start_date.tz_localize(None).tz_localize("UTC")
+
         grid_price: DataFrame = pd.DataFrame(
             {"demand_price_eur_per_kwh": self.grid_dict["demand_price_eur_per_kwh"]},
-            index=pd.date_range(start=self.grid_start_date, periods=24, freq="h"),
+            index=pd.date_range(start=start_date, periods=24, freq="h"),
         )
 
         # Convert to 15 minute intervals by forward filling the values
@@ -113,8 +118,8 @@ class Test_Customer_Data:
 
         Preprocesses PV and consumption data based on assume_mislabel
         if assume_mislabel:
-            the timezone of the consumption data is reset to UTC thus ensuring 24 overlap
-            of PV and consumption data
+            the consumption and price data are already shifted to UTC when loaded,
+            thus ensuring 24h overlap of PV and consumption data
         else:
             the PV data is extended with 0s for the 2h during the night due
             to no expected PV power generation during the night ensuring 24h overlap
@@ -130,14 +135,7 @@ class Test_Customer_Data:
         pv: DataFrame = self.get_pv_data()
         grid: DataFrame = self.get_grid_price_data()
 
-        if self.assume_mislabel:
-            # Force UTC as original time zone when assuming mislabeled timestamp column
-            consumption.index = consumption.index.tz_localize(None).tz_localize("UTC")
-            grid.index = grid.index.tz_localize(None).tz_localize("UTC")
-            if self.target_timezone != "UTC":
-                consumption.index = consumption.index.tz_convert(self.target_timezone)
-                grid.index = grid.index.tz_convert(self.target_timezone)
-        else:
+        if not self.assume_mislabel:
             # Extend PV data back to midnight Europe/Berlin local time with 0s
             pv = pv.reindex(consumption.index).fillna(0)
 
